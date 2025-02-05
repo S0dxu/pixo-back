@@ -83,6 +83,32 @@ app.get("/get-random-image", async (req, res) => {
   }
 });
 
+app.get("/get-image-by-id/:id", async (req, res) => {
+  try {
+    const imageId = req.params.id;
+    const image = await Image.findById(imageId);
+
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    res.json({
+      _id: image._id,
+      url: image.url,
+      author: image.author,
+      date: image.date,
+      title: image.title,
+      songname: image.songname,
+      songartist: image.songartist,
+      tags: image.tags
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch image" });
+  }
+});
+
+
 app.post("/upload-image", async (req, res) => {
   try {
     const { url, author, title, songname, songartist, tags } = req.body;
