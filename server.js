@@ -67,7 +67,16 @@ app.get("/get-random-image", async (req, res) => {
 
     const randomImage = await Image.findOne().skip(randomIndex);
     
-    res.json({ url: randomImage.url, author: randomImage.author, date: randomImage.date, title: randomImage.title, songname: randomImage.songname, songartist: randomImage.songartist, tags: randomImage.tags });
+    res.json({
+      _id: randomImage._id,
+      url: randomImage.url,
+      author: randomImage.author,
+      date: randomImage.date,
+      title: randomImage.title,
+      songname: randomImage.songname,
+      songartist: randomImage.songartist,
+      tags: randomImage.tags
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ "Another error " : error });
