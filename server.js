@@ -1,10 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
+const SECRET_KEY = process.env.JWT_SECRET;
 
 app.use(express.json());
 
@@ -79,7 +82,7 @@ app.get("/get-random-image", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ "Another error " : error });
+    res.status(500).json({ "another error " : error });
   }
 });
 
@@ -89,7 +92,7 @@ app.get("/get-image-by-id/:id", async (req, res) => {
     const image = await Image.findById(imageId);
 
     if (!image) {
-      return res.status(404).json({ error: "Image not found" });
+      return res.status(404).json({ error: "image not found" });
     }
 
     res.json({
@@ -104,7 +107,7 @@ app.get("/get-image-by-id/:id", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to fetch image" });
+    res.status(500).json({ error: "failed to fetch image ;(" });
   }
 });
 
@@ -114,7 +117,7 @@ app.post("/upload-image", async (req, res) => {
     const { url, author, title, songname, songartist, tags } = req.body;
 
     if (!url || !author || !title || !songname || !songartist || !tags) {
-      return res.status(400).json({ error: "all fields are mandatory" }); // straight up from google translate
+      return res.status(400).json({ error: "all fields are mandatory" });
     }
 
     const newImage = new Image({
@@ -133,6 +136,62 @@ app.post("/upload-image", async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "nope!" });
   }
+});
+
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
+});
+const User = mongoose.model("User", userSchema);
+
+const authenticateToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Access denied" });
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.status(403).json({ message: "Invalid token" });
+    req.user = user;
+    next();
+  });
+};
+
+app.post("/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ message: "All fields are required" });
+    const userExists = await User.findOne({ username });
+    if (userExists) return res.status(400).json({ message: "User already exists" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+
+    await newUser.save();
+    res.status(201).json({ message: "Registration successful" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ message: "All fields are required" });
+
+    const user = await User.findOne({ username });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });;
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+    const token = jwt.sign({ id: user._id, username: user.username }, SECRET_KEY, { expiresIn: "1h" });
+    res.json({ message: "Login successful", token });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
+app.get("/protected", authenticateToken, (req, res) => {
+  res.json({ message: "authenticated", user: req.user });
 });
 
 app.listen(PORT, () => {
