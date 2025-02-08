@@ -190,6 +190,17 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.get("/get-user-images/:author", async (req, res) => {
+  try {
+    const { author } = req.params;
+    const images = await Image.find({ author });
+    res.json(images);
+  } catch (error) {
+    res.status(500).json({ error: "Error retrieving images" });
+  }
+});
+
+
 app.get("/protected", authenticateToken, (req, res) => {
   res.json({ message: "authenticated", user: req.user });
 });
