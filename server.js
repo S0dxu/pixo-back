@@ -12,7 +12,7 @@ const SECRET_KEY = process.env.JWT_SECRET;
 app.use(express.json());
 
 app.use(cors({
-  origin: ["http://localhost:5173", "http://10.5.0.2:5173", "https://pixo-v1.netlify.app"],
+  origin: ["https://pixo-v1.netlify.app"],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
