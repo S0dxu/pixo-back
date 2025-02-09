@@ -12,7 +12,7 @@ const SECRET_KEY = process.env.JWT_SECRET;
 app.use(express.json());
 
 app.use(cors({
-  origin: ["https://pixo-v1.netlify.app"],
+  origin: ["https://pixo-v1.netlify.app", "http://10.5.0.2:5173"],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
@@ -200,11 +200,22 @@ app.get("/get-user-images/:author", async (req, res) => {
   }
 });
 
+app.get("/get-user-by-id/profile/:username", async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json({ username: user.username });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 app.get("/protected", authenticateToken, (req, res) => {
   res.json({ message: "authenticated", user: req.user });
 });
 
 app.listen(PORT, () => {
-  console.log(`server running on http://localhost:${PORT}`);
+  console.log(`server running`);
 });
