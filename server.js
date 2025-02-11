@@ -36,7 +36,7 @@ const imageSchema = new mongoose.Schema({
   date: Date,
   title: String,
   songname: String,
-  songartist: String,
+  songlink: String,
   tags: Array
 });
 
@@ -77,7 +77,7 @@ app.get("/get-random-image", async (req, res) => {
       date: randomImage.date,
       title: randomImage.title,
       songname: randomImage.songname,
-      songartist: randomImage.songartist,
+      songlink: randomImage.songlink,
       tags: randomImage.tags
     });
   } catch (error) {
@@ -102,7 +102,7 @@ app.get("/get-image-by-id/:id", async (req, res) => {
       date: image.date,
       title: image.title,
       songname: image.songname,
-      songartist: image.songartist,
+      songlink: image.songlink,
       tags: image.tags
     });
   } catch (error) {
@@ -114,9 +114,9 @@ app.get("/get-image-by-id/:id", async (req, res) => {
 
 app.post("/upload-image", async (req, res) => {
   try {
-    const { url, author, title, songname, songartist, tags } = req.body;
+    const { url, author, title, songname, songlink, tags } = req.body;
 
-    if (!url || !author || !title || !songname || !songartist || !tags) {
+    if (!url || !author || !title || !songname || !songlink || !tags) {
       return res.status(400).json({ error: "all fields are mandatory" });
     }
 
@@ -126,7 +126,7 @@ app.post("/upload-image", async (req, res) => {
       date: new Date(),
       title,
       songname,
-      songartist,
+      songlink,
       tags
     });
 
