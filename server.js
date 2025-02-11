@@ -4,6 +4,8 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 require("dotenv").config();
+const fs = require('fs');
+const ytdl = require('ytdl-core');
 
 const app = express();
 const PORT = process.env.PORT;
@@ -111,8 +113,50 @@ app.get("/get-image-by-id/:id", async (req, res) => {
   }
 });
 
+async function getAudioLinkFromYouTube(songlink) {
+  try {
+    const info = await ytdl.getInfo(songlink);
+    const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+    const bestAudio = audioFormats[0];
+    return bestAudio.url;
+  } catch (error) {
+    console.error('Errore nell\'estrazione dell\'audio:', error);
+    throw new Error('Errore nell\'estrazione dell\'audio');
+  }
+}
 
 app.post("/upload-image", async (req, res) => {
+  try {
+    const { url, author, title, songname, songlink, tags } = req.body;
+
+    if (!url || !author || !title || !songname || !songlink || !tags) {
+      return res.status(400).json({ error: "all fields are mandatory" });
+    }
+
+    const newImage = new Image({
+      url,
+      author,
+      date: new Date(),
+      title,
+      songname,
+      songlink,
+      tags
+    });
+    console.log(songlink)
+
+    const audioLink = await getAudioLinkFromYouTube(songlink);
+    console.log(audioLink);
+    newImage.songlink = audioLink;
+    
+    await newImage.save();
+    res.status(201).json({ message: "yep!", image: newImage });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "nope!" });
+  }
+});
+
+/* app.post("/upload-image", async (req, res) => {
   try {
     const { url, author, title, songname, songlink, tags } = req.body;
 
@@ -136,7 +180,7 @@ app.post("/upload-image", async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "nope!" });
   }
-});
+}); */
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
