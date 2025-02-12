@@ -113,7 +113,7 @@ app.get("/get-image-by-id/:id", async (req, res) => {
   }
 });
 
-async function getAudioLinkFromYouTube(songlink) {
+/* async function getAudioLinkFromYouTube(songlink) {
   try {
     const info = await ytdl.getInfo(songlink);
     const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
@@ -123,7 +123,7 @@ async function getAudioLinkFromYouTube(songlink) {
     console.error('Errore nell\'estrazione dell\'audio:', error);
     throw new Error('Errore nell\'estrazione dell\'audio');
   }
-}
+} */
 
 app.post("/upload-image", async (req, res) => {
   try {
@@ -144,9 +144,9 @@ app.post("/upload-image", async (req, res) => {
     });
     console.log(songlink)
 
-    const audioLink = await getAudioLinkFromYouTube(songlink);
+    /* const audioLink = await getAudioLinkFromYouTube(songlink);
     console.log(audioLink);
-    newImage.songlink = audioLink;
+    newImage.songlink = audioLink; */
     
     await newImage.save();
     res.status(201).json({ message: "yep!", image: newImage });
