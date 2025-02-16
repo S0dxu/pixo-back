@@ -131,7 +131,7 @@ app.post("/upload-image", async (req, res) => {
   try {
     const { url, author, title, songname, songlink, tags } = req.body;
 
-    if (!url || !author || !title || !songname || !songlink || !tags) {
+    if (!url || !author || !title || !songname || !tags) {
       return res.status(400).json({ error: "all fields are mandatory" });
     }
 
