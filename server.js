@@ -28,18 +28,13 @@ mongoose.connect(process.env.MONGO_URI)
 
 const imageSchema = new mongoose.Schema({
   url: String,
-  title: String,
   author: String,
-  music: {
-    title: String,
-    artist: String,
-    url: String,
-  },
   date: Date,
   title: String,
   songname: String,
   songlink: String,
-  tags: Array
+  tags: Array,
+  views: { type: Number, default: 0 }
 });
 
 const Image = mongoose.model("Image", imageSchema);
@@ -69,8 +64,10 @@ app.get("/get-random-image", async (req, res) => {
     }
 
     const randomIndex = Math.floor(Math.random() * totalImages);
-
     const randomImage = await Image.findOne().skip(randomIndex);
+
+    randomImage.views += 1;
+    await randomImage.save();
     
     res.json({
       _id: randomImage._id,
@@ -80,7 +77,8 @@ app.get("/get-random-image", async (req, res) => {
       title: randomImage.title,
       songname: randomImage.songname,
       songlink: randomImage.songlink,
-      tags: randomImage.tags
+      tags: randomImage.tags,
+      views: randomImage.views
     });
   } catch (error) {
     console.error(error);
@@ -97,6 +95,9 @@ app.get("/get-image-by-id/:id", async (req, res) => {
       return res.status(404).json({ error: "image not found" });
     }
 
+    image.views += 1;
+    await image.save();
+
     res.json({
       _id: image._id,
       url: image.url,
@@ -105,7 +106,8 @@ app.get("/get-image-by-id/:id", async (req, res) => {
       title: image.title,
       songname: image.songname,
       songlink: image.songlink,
-      tags: image.tags
+      tags: image.tags,
+      views: image.views
     });
   } catch (error) {
     console.error(error);
