@@ -34,7 +34,8 @@ const imageSchema = new mongoose.Schema({
   songname: String,
   songlink: String,
   tags: Array,
-  views: { type: Number, default: 0 }
+  views: { type: Number, default: 0 },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // arrays of users
 });
 
 const Image = mongoose.model("Image", imageSchema);
@@ -52,6 +53,96 @@ app.get('/get-images', async (req, res) => {
   const images = await Image.find(query).sort({ date: -1 }).limit(limit);
 
   res.json(images);
+});
+
+app.post("/like-image", async (req, res) => {
+  try {
+    const { imageId, userId } = req.body;
+
+    if (!imageId || !userId) {
+      return res.status(400).json({ error: "Both imageId and userId are required" });
+    }
+
+    const image = await Image.findById(imageId);
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    /* if (image.likes.includes(userId)) {
+      return res.status(400).json({ error: "You have already liked this image" });
+    } */
+
+    image.likes.push(userId);
+    await image.save();
+
+    res.status(200).json({ message: "Like added successfully", likes: image.likes.length });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred while adding the like" });
+  }
+});
+
+app.post("/dislike-image", async (req, res) => {
+  try {
+    const { imageId, userId } = req.body;
+
+    if (!imageId || !userId) {
+      return res.status(400).json({ error: "Image ID and User ID are required" });
+    }
+
+    const image = await Image.findById(imageId);
+
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    if (!image.likes.includes(userId)) {
+      return res.status(400).json({ error: "User hasn't liked this image" });
+    }
+
+    image.likes = image.likes.filter(like => like.toString() !== userId);
+
+    await image.save();
+
+    res.status(200).json({ likes: image.likes.length });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred while processing the dislike" });
+  }
+});
+
+
+app.get("/image/:imageId", async (req, res) => {
+  try {
+    const imageId = req.params.imageId;
+    const image = await Image.findById(imageId);
+
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    res.status(200).json(image);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred while retrieving the image" });
+  }
+});
+
+
+app.get("/image-likes/:imageId", async (req, res) => {
+  try {
+    const { imageId } = req.params;
+
+    const image = await Image.findById(imageId).populate('likes');
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    res.status(200).json({ likes: image.likes.length });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred while fetching likes" });
+  }
 });
 
 
@@ -78,7 +169,8 @@ app.get("/get-random-image", async (req, res) => {
       songname: randomImage.songname,
       songlink: randomImage.songlink,
       tags: randomImage.tags,
-      views: randomImage.views
+      views: randomImage.views,
+      likes: randomImage.likes.length
     });
   } catch (error) {
     console.error(error);
@@ -107,7 +199,8 @@ app.get("/get-image-by-id/:id", async (req, res) => {
       songname: image.songname,
       songlink: image.songlink,
       tags: image.tags,
-      views: image.views
+      views: image.views,
+      likes: image.likes.length
     });
   } catch (error) {
     console.error(error);
