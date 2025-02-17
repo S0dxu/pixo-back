@@ -170,7 +170,7 @@ app.get("/get-random-image", async (req, res) => {
       songlink: randomImage.songlink,
       tags: randomImage.tags,
       views: randomImage.views,
-      likes: randomImage.likes.length
+      likes: randomImage.likes
     });
   } catch (error) {
     console.error(error);
@@ -200,7 +200,7 @@ app.get("/get-image-by-id/:id", async (req, res) => {
       songlink: image.songlink,
       tags: image.tags,
       views: image.views,
-      likes: image.likes.length
+      likes: image.likes
     });
   } catch (error) {
     console.error(error);
