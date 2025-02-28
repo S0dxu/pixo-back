@@ -339,6 +339,16 @@ app.get("/get-user-images/:author", async (req, res) => {
   }
 });
 
+app.get("/get-all-images", async (req, res) => {
+  try {
+    const images = await Image.find({}).sort({ date: -1 });
+    res.json(images);
+  } catch (error) {
+    console.error("Error retrieving images:", error);
+    res.status(500).json({ error: "Error retrieving images" });
+  }
+});
+
 app.get("/get-user-by-id/profile/:username", async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username });
