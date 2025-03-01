@@ -341,13 +341,19 @@ app.get("/get-user-images/:author", async (req, res) => {
 
 app.get("/get-all-images", async (req, res) => {
   try {
-    const images = await Image.find({}).sort({ date: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const images = await Image.find({}).sort({ date: -1 }).skip(skip).limit(limit);
+    
     res.json(images);
   } catch (error) {
     console.error("Error retrieving images:", error);
     res.status(500).json({ error: "Error retrieving images" });
   }
 });
+
 
 app.get("/get-user-by-id/profile/:username", async (req, res) => {
   try {
