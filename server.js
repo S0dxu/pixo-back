@@ -159,7 +159,11 @@ app.get("/get-random-image", async (req, res) => {
 
     randomImage.views += 1;
     await randomImage.save();
-    
+
+    // Recupera il picture dell'utente associato
+    const user = await User.findOne({ username: randomImage.author });
+    const userPicture = user ? user.picture : null;
+
     res.json({
       _id: randomImage._id,
       url: randomImage.url,
@@ -170,25 +174,29 @@ app.get("/get-random-image", async (req, res) => {
       songlink: randomImage.songlink,
       tags: randomImage.tags,
       views: randomImage.views,
-      likes: randomImage.likes
+      likes: randomImage.likes,
+      picture: userPicture // Aggiungi il campo picture
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ "another error " : error });
+    res.status(500).json({ error: "An error occurred while fetching a random image" });
   }
 });
+
 
 app.get("/get-image-by-id/:id", async (req, res) => {
   try {
     const imageId = req.params.id;
     const image = await Image.findById(imageId);
-
     if (!image) {
       return res.status(404).json({ error: "image not found" });
     }
 
     image.views += 1;
     await image.save();
+
+    const user = await User.findOne({ username: image.author });
+    const userPicture = user ? user.picture : null;
 
     res.json({
       _id: image._id,
@@ -200,13 +208,15 @@ app.get("/get-image-by-id/:id", async (req, res) => {
       songlink: image.songlink,
       tags: image.tags,
       views: image.views,
-      likes: image.likes
+      likes: image.likes,
+      picture: userPicture
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "failed to fetch image ;(" });
   }
 });
+
 
 /* async function getAudioLinkFromYouTube(songlink) {
   try {
@@ -279,7 +289,8 @@ app.post("/upload-image", async (req, res) => {
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  picture: { type: String, required: true }
 });
 const User = mongoose.model("User", userSchema);
 
@@ -296,20 +307,25 @@ const authenticateToken = (req, res, next) => {
 
 app.post("/register", async (req, res) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ message: "All fields are required" });
+    const { username, password, picture } = req.body;
+    if (!username || !password || !picture) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
     const userExists = await User.findOne({ username });
     if (userExists) return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
+    const newUser = new User({ username, password: hashedPassword, picture });
 
     await newUser.save();
     res.status(201).json({ message: "Registration successful" });
   } catch (error) {
+    console.error("Error during registration:", error);
     res.status(500).json({ message: "Server error", error });
   }
 });
+
 
 app.post("/login", async (req, res) => {
   try {
@@ -369,7 +385,7 @@ app.get("/get-user-by-id/profile/:username", async (req, res) => {
     const user = await User.findOne({ username: req.params.username });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.json({ username: user.username });
+    res.json({ username: user.username, picture: user.picture });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error" });
