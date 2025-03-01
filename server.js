@@ -341,11 +341,20 @@ app.get("/get-user-images/:author", async (req, res) => {
 
 app.get("/get-all-images", async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const search = req.query.search;
 
-    const images = await Image.find({}).sort({ date: -1 }).skip(skip).limit(limit);
+    let images;
+    if (search && search.trim() !== "") {
+      images = await Image.find({
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { tags: { $regex: search, $options: "i" } }
+        ]
+      }).limit(limit);
+    } else {
+      images = await Image.aggregate([{ $sample: { size: limit } }]);
+    }
     
     res.json(images);
   } catch (error) {
