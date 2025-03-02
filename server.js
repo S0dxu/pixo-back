@@ -238,16 +238,24 @@ app.post("/upload-image", async (req, res) => {
       return res.status(400).json({ error: "all fields are mandatory" });
     }
 
+    const deAuthor = jwt.decode(author)
+
+    if (!deAuthor) {
+      return res.status(400).json({ error: "Invalid token" });
+    }
+
+    const username = deAuthor.username;
+
     const newImage = new Image({
       url,
-      author,
+      author: username,
       date: new Date(),
       title,
       songname,
       songlink,
       tags
     });
-    console.log(songlink)
+    console.log(newImage)
 
     /* const audioLink = await getAudioLinkFromYouTube(songlink);
     console.log(audioLink);
