@@ -246,13 +246,19 @@ async function uploadImageToImgur(imageBase64) {
     body: formData
   });
   
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Errore da Imgur:", errorText);
+    throw new Error("Errore durante l'upload dell'immagine");
+  }
+  
   const data = await response.json();
   if (data.success) {
     return data.data.link;
   } else {
-    return "error uploading image";
+    throw new Error("Errore nell'upload dell'immagine: " + JSON.stringify(data));
   }
-}
+}  
   
 app.post("/upload-image-to-imgur", upload.single('image'), async (req, res) => {
   try {
