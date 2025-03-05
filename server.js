@@ -6,13 +6,10 @@ const bcrypt = require("bcrypt");
 require("dotenv").config();
 const fs = require('fs');
 const ytdl = require('ytdl-core');
-const multer  = require('multer');
-const upload = multer();
 
 const app = express();
 const PORT = process.env.PORT;
 const SECRET_KEY = process.env.JWT_SECRET;
-const clientId = process.env.IMGUR_CLIENT_ID;
 
 app.use(express.json());
 
@@ -233,62 +230,43 @@ app.get("/get-image-by-id/:id", async (req, res) => {
   }
 } */
 
-  async function uploadImageToImgur(imageBase64) {
-    console.log("uploadImageToImgur: Base64 image received, length:", imageBase64.length);
-    const url = "https://api.imgur.com/3/upload";
-    const formData = new FormData();
-    formData.append('image', imageBase64);
-    console.log("uploadImageToImgur: FormData prepared");
+/* async function uploadImageToImgur(imageBase64) {
+  const url = "https://api.imgur.com/3/upload";
+  const formData = new FormData();
+  formData.append('image', imageBase64);
   
-    const headers = {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
       "Authorization": `Client-ID ${clientId}`
-    };
-    console.log("uploadImageToImgur: Headers set:", headers);
-  
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: headers,
-        body: formData
-      });
-      console.log("uploadImageToImgur: Response status:", response.status);
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("uploadImageToImgur: Errore da Imgur:", errorText);
-        throw new Error("Errore durante l'upload dell'immagine");
-      }
-  
-      const data = await response.json();
-      console.log("uploadImageToImgur: Dati ricevuti da Imgur:", data);
-  
-      if (data.success) {
-        console.log("uploadImageToImgur: Immagine caricata con successo, link:", data.data.link);
-        return data.data.link;
-      } else {
-        throw new Error("Errore nell'upload dell'immagine: " + JSON.stringify(data));
-      }
-    } catch (error) {
-      console.error("uploadImageToImgur: Catturato errore:", error);
-      throw error;
-    }
-  }
-  
-  
-  app.post("/upload-image-to-imgur", upload.single('image'), async (req, res) => {
-    console.log("Endpoint /upload-image-to-imgur: req.file:", req.file);
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "Image required" });
-      }
-      const link = await uploadImageToImgur(req.file.buffer.toString('base64'));
-      res.status(200).json({ success: true, data: { link } });
-    } catch (error) {
-      console.error("Endpoint /upload-image-to-imgur: Errore durante l'upload:", error);
-      res.status(500).json({ error: "An error occurred during image upload" });
-    }
+    },
+    body: formData
   });
   
+  const data = await response.json();
+  if (data.success) {
+    return data.data.link;
+  } else {
+    return "error uploading image";
+  }
+}
+  
+app.post("/upload-image-to-imgur", upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Image required" });
+    }
+    const link = await uploadImageToImgur(req.file.buffer.toString('base64'));
+    
+    if (link.startsWith("error")) {
+      return res.status(500).json({ error: "Error uploading image" });
+    }
+    res.status(200).json({ success: true, data: { link } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred during image upload" });
+  }
+}); */
 
 app.post("/upload-image", async (req, res) => {
   try {
